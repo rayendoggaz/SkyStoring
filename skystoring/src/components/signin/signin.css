@@ -1,0 +1,73 @@
+/* signin.css */
+
+/* signin.css */
+
+.signin-container {
+  background-color: #E3EDF8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+
+  
+  .container {
+    background-color: #ffffff; /* White color */
+    border-radius: 10px; /* Rounded edges */
+    padding: 30px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle box shadow */
+    width: 800px; /* Adjusted to max-width for responsiveness */
+    height: 500px;
+    position: relative; /* Relative positioning for child absolute positioning */
+  }
+  
+  .top-left-image {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .top-left-image img {
+    margin-right: 10px;
+  }
+  
+  .logo-text {
+    font-weight: bold;
+    font-size: 30px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  .welcome-message {
+    padding-left: 116px;
+    margin-bottom: 60px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  .welcome-message p {
+    font-size: 20px;
+    font-weight: bold;
+  }
+  
+  .input {
+    display: flex;
+    flex-direction: column;
+    justify-content:center ;
+    margin-left: 100px;
+  }
+  
+  .ant-input {
+    height: 40px;
+  }
+  
+  .ant-btn {
+    margin-left: 70px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .form-signin{
+    margin-left: 100px;
+  }

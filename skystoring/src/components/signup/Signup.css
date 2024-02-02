@@ -1,0 +1,48 @@
+.signup-container {
+    background-color: whitesmoke;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 50%; /* Adjust the width as needed */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .signup-container2 {
+    background-color: #ffffff; /* White color */
+    border-radius: 10px; /* Rounded edges */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle box shadow */
+    width: 660px; /* Adjusted to max-width for responsiveness */
+    height: 540px;
+    position: relative; 
+    margin-top: 80px;
+    margin-left: 60px;
+  }
+
+body {
+    background-color: #E3EDF8; /* Cold Steel color */
+    margin: 0;
+}
+.input{
+    margin-left: 100px;
+    width: 700px;
+}
+.input2{
+    margin-left: 65px;
+    width: 700px;
+}
+.container2 {
+    background-color: #bcc4ca; 
+    padding: 30px;
+    width: 50%;
+    height: 100vh; /* Set the height to 100% of the viewport height */
+    position: fixed;
+    left: 0; /* Align to the left side */
+    top: 0; /* Align to the top */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+}
