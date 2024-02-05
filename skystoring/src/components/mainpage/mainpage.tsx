@@ -84,10 +84,10 @@ const MainPage: React.FC = () => {
                     searchQuery={searchQuery}
                     onSelect={() => {}}
                     onFileDrop={() => {}}
-                    onMoveToFolder={(folderId, files) => {
+                    onMoveToFolder={(files,folderId) => {
                       // Implement your logic to move files to a folder
                       console.log(`Move files to folder ${folderId}`, files);
-                    }}
+                    }}  
                     folders={folders}
                   />
                 )}

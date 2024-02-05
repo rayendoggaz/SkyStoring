@@ -53,19 +53,6 @@ class FolderList(APIView):
     def get_queryset(self):
         user = self.request.user
         return Folder.objects.filter(user=user)
-    
-    def perform_create(self, serializer):
-        # Save the file and return the serialized data
-        serializer.save(user=self.request.user)
-        return Response(FolderSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
-
-    def get(self, request):
-        folders = Folder.objects.filter(user=request.user)
-        if folders:
-            data = self.serializer_class(folders, many=True).data
-            return Response(data, 200)
-        else:
-            return Response({"message": "No data found"}, 200)
         
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -73,6 +60,22 @@ class FolderList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def perform_create(self, serializer):
+        # Save the file and return the serialized data
+        serializer.save(user=self.request.user)
+        return Response(FolderSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+
+    def get(self, request):
+        print("User:", request.user)  # Add this line for debugging
+        folders = Folder.objects.filter(user=request.user)
+        if folders:
+            data = self.serializer_class(folders, many=True).data
+            return Response(data, 200)
+        else:
+            print("User:", request.user)  # Add this line for debugging
+            return Response({"message": []}, 200)
+        
 
 
 class FolderDetail(generics.RetrieveUpdateDestroyAPIView):

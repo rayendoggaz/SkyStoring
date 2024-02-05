@@ -5,34 +5,36 @@ import type { UploadFile, UploadProps } from 'antd';
 import axios from 'axios';
 import { Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
+
 export interface FileType extends UploadFile<any> {
   uid: string;
   name: string;
   file: string;
-  folderId: number | null;
+  folderId: number;
 }
-
 export interface FolderType {
   id: number;
   name: string;
 } 
 
 interface FileListProps {
-  folderId?: number | undefined; // Make it optional
+  folderId?: number ; 
   searchQuery: string;
   onSelect: (files: FileType[]) => void;
-  onMoveToFolder?: (folderId: number, files: FileType[]) => void; // Make it optional
-  onMoveFilesToFolder?: (files: FileType[], folderId: number) => void; // Make it optional
+  onMoveToFolder?: (folderId: number, files: FileType[]) => void; 
+  onMoveFilesToFolder?: (files: FileType[], folderId: number) => void; 
   onFileDrop: (result: DropResult) => void;
-  folders: FolderType[]; // Add this line
+  folders: FolderType[];
 }
 
-const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, onMoveToFolder, folders }) => {
+const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, onMoveToFolder, folders: initialFolders }) => {
+
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [previewTitle, setPreviewTitle] = useState('');
   const [fileList, setFileList] = useState<FileType[]>([]);
   const [loading, setLoading] = useState(false);
+  const [folders, setFolders] = useState<FolderType[]>(initialFolders || []); // Initialize with initialFolders if available
   const [selectedFiles, setSelectedFiles] = useState<FileType[]>([]);
   const [moveToFolderVisible, setMoveToFolderVisible] = useState(false);
   const [selectedFolderForMove, setSelectedFolderForMove] = useState<number | null>(null);
@@ -127,24 +129,19 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
       const formData = new FormData();
       formData.append('file', file);
       const token = localStorage.getItem('accessToken'); // Retrieve access token from local storage
-      const response = await axios.post('http://localhost:8000/api/files/', formData, {
+      const response = await axios.post(`http://localhost:8000/api/files/`, formData, {
         headers: {
           Authorization: `Bearer ${token}`, // Use Bearer for Authorization
         },
       });
       const uploadedFile: FileType = { ...response.data, uid: response.data.uid, name: response.data.name };
-      // Wait for the state update to complete before triggering success
-      setFileList((prevFileList) => [...prevFileList, uploadedFile]);
-
-      // Fetch the updated file list
+      setFileList([...fileList, uploadedFile]);
       await fetchFiles();
 
-      message.success(`${file.name} uploaded successfully.`);
-      
       onSuccess();
-    } catch (error) {  
+      message.success(`${file.name} uploaded successfully.`);
+    } catch (error) {
       console.error('Error uploading file:', error);
-      message.error('Failed to upload file.');
     }
   };
 
@@ -189,7 +186,7 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         },
       });
 
-      const filesWithNames = response.data.map((file: FileType) => ({
+      const filesWithNames = response.data?.map((file: FileType) => ({
         ...file,
         name: getFileNameFromUrl(file.file),
       }));
@@ -197,6 +194,7 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
       console.log('Files fetched successfully:', filesWithNames);
 
       setFileList(filesWithNames);
+      setFolders(response.data.folders); // Add this line to update folders
       console.log('Files:', filesWithNames);
     } catch (error: any) {
       console.error('Error fetching files:', error);
@@ -235,20 +233,13 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
   }, []); // Fetch files when the component mounts
 
 
-  const MoveToFileDropdown = ({ file }: { file: FileType }) => {
+  const MoveToFileDropdown = ({ file, folders = [] }: { file: FileType; folders?: FolderType[] }) => {
     const handleMenuClick = (selectedFolderId: number) => {
       if (onMoveToFolder) {
         onMoveToFolder(selectedFolderId, [file]);
       }
     };
 
-    const menu = (
-      <Menu onClick={(e) => handleMenuClick(parseInt(e.key, 10))}>
-        {folders.map((folder) => (
-          <Menu.Item key={folder.id}>{folder.name}</Menu.Item>
-        ))}
-      </Menu>
-    );
 
     const fetchFolderContents = async (folderId: number) => {
       try {
@@ -276,7 +267,6 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         const headers = {
           'X-CSRFToken': csrftoken,
         };
-        debugger;
 
         const formData = new FormData();
         formData.append('files[]', file.uid);
@@ -296,22 +286,21 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
       }
     };
 
-    return (
-      <Dropdown overlay={
-        <Menu>
-          {folders.map((folder) => (
-            <Menu.Item key={folder.id} onClick={() => handleMoveToFolder(folder.id)}>
-              {folder.name}
-            </Menu.Item>  
-          ))}
+   return (
+    <Dropdown
+      overlay={
+        <Menu onClick={(e) => handleMenuClick(parseInt(e.key, 10))}>
+          {Array.isArray(folders) &&
+            folders?.map((folder) => (
+              <Menu.Item key={folder.id}>{folder.name}</Menu.Item>
+            ))}
         </Menu>
       }
-      placement="bottomLeft"
     >
       <Button icon={<FolderOpenOutlined />}>Move to Folder</Button>
     </Dropdown>
-    );
-  };
+  );
+};;
  
   return (
     <>
@@ -338,7 +327,7 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         <img alt="example" style={{ width: '100%' }} src={previewImage} />
       </Modal>
       <div style={{ marginTop: '10px' }}>
-        {fileList.map((file) => (
+        {fileList?.map((file) => (
           <div key={file.uid} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
             <span>{file.name}</span>
             <div>
@@ -348,8 +337,8 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
               <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(file)} loading={loading}>
                 Delete
               </Button>
-              <MoveToFileDropdown file={file} />
-                <div key={file.uid} onClick={() => handleFileClick(file)}></div>
+              <MoveToFileDropdown file={file} folders={folders} />
+              <div key={file.uid} onClick={() => handleFileClick(file)}></div>
             </div>
           </div>
         ))}

@@ -96,9 +96,9 @@ WSGI_APPLICATION = 'custom_auth.wsgi.application'
 DATABASES = {
     'default': {
          'ENGINE': 'django.db.backends.postgresql',
-         'NAME': 'skystoring',
+         'NAME': 'skystoring_vrai',
          'USER': 'postgres',
-         'PASSWORD': 'rayen',
+         'PASSWORD': '1234',
          'HOST': 'localhost',
          'PORT': '5432',
    }
@@ -151,7 +151,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Rest framework
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',)
+    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',
+    'rest_framework.authentication.TokenAuthentication',
+)
 }
 
 # JWT

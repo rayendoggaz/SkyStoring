@@ -19,39 +19,41 @@ interface Folder {
   files: { uid: string; name: string }[];
 }
 
+
 interface DraggableFolder extends Folder {
   index: number;
 }
 
 interface FolderListProps {}
-
 const FolderList: React.FC<FolderListProps> = () => {
   const [folders, setFolders] = useState<DraggableFolder[]>([]);
   const [form] = Form.useForm();
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null); // New state for the selected folder
+  
   useEffect(() => {
-  const token = localStorage.getItem('accessToken');
-  axios.get('http://localhost:8000/api_folder/folders/', {
-    headers: {
-      Authorization: `Bearer ${token}`, // Use Bearer for Authorization
-    },
-  }).then((response) => {
-    if (Array.isArray(response.data)) {
-      const draggableFolders = response.data.map((folder: Folder, index: number) => ({
-        ...folder,
-        index,
-      }));
-      setFolders(draggableFolders);
-    } else {
-      console.error('Invalid data format received from the server. Expected an array.');
-    }
-  }).catch((error) => {
-    console.error('Error fetching folders:', error);
-    // Handle error as needed
-  });
-}, []);
+    const token = localStorage.getItem('accessToken');
+    axios.get('http://localhost:8000/api_folder/folders/', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).then((response) => {
+      console.log('API Response:', response.data);
+      console.log("salemalaykom")
+      console.log(response.data)
+  
+      if (Array.isArray(response.data)) {
+        const draggableFolders = response.data.map((folder: Folder, index: number) => ({
+          ...folder,
+          index,
+        }));
+        setFolders(draggableFolders);
+      } else {
+        console.error('API response is not an array:', response.data);
+      }
+    });
+  }, []);
 
 
   const onFinish = (values: any) => {
@@ -65,7 +67,7 @@ const FolderList: React.FC<FolderListProps> = () => {
         ...response.data,
         index: folders.length,
       };
-      console.log("test")
+      console.log(response.data.name)
       setFolders((prevFolders) => [...prevFolders, newFolder]);
       form.resetFields();
     });
