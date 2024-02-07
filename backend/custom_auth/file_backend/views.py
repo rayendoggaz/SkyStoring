@@ -8,7 +8,6 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -51,27 +50,6 @@ class CustomFileDelete(APIView):
         file_instance.delete()  # Delete the file record from the database
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@csrf_exempt
-@require_POST
-def move_files_to_folder(request, target_folder_id):
-    try:
-        files_to_move_ids = request.data.get('files', [])
-        move_files_to_folder_method(files_to_move_ids, target_folder_id)
-        return JsonResponse({'message': 'Files moved to folder successfully.'})
-    except Exception as e:
-        return JsonResponse({'error': f'Error moving files to folder: {str(e)}'}, status=500)
-
-def move_files_to_folder_method(files_to_move_ids, target_folder_id):
-    # Get the target folder
-    target_folder = get_object_or_404(Folder, id=target_folder_id)
-
-    # Get the files to move
-    files_to_move = File.objects.filter(uid__in=files_to_move_ids)
-
-    # Move each file to the target folder
-    for file_to_move in files_to_move:
-        file_to_move.folder = target_folder
-        file_to_move.save()
 
 @require_POST
 @csrf_exempt
@@ -146,3 +124,4 @@ def file_preview(request, file_uid):
     except Exception as e:
         # Handle any errors and return an error response
         return HttpResponseServerError('Failed to retrieve file content: ' + str(e))
+
