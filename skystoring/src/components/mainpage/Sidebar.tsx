@@ -1,5 +1,4 @@
 //sidebar.tsx
-
 import React, { useState } from 'react';
 import {
   DesktopOutlined,
@@ -10,14 +9,27 @@ import {
   PushpinOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, theme, Typography } from 'antd';
+import { Layout, Menu, theme, Typography ,Button} from 'antd';
 import { Link } from 'react-router-dom';
+import PinnedFilesPage from './PinnedFilesPage';
+
 
 
 
 const { Sider } = Layout;
 
-type MenuItem = Required<MenuProps>['items'][number];
+
+interface SidebarProps {
+  onSelectContent: (content: string) => void;
+}
+
+
+type MenuItem = {
+  key: React.Key;
+  icon?: React.ReactNode;
+  children?: MenuItem[];
+  label: React.ReactNode; // Add the label property
+};
 
 function getItem(
   label: React.ReactNode,
@@ -33,19 +45,31 @@ function getItem(
   } as MenuItem;
 }
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (content: string) => void ;onPinnedClick: () => void}> = ({
+  onmystoringclick,
+  onSidebarItemClick,
+  onPinnedClick,
+}) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
+    
   const items: MenuItem[] = [
     getItem(<Link to={"/mainpage"}>Home</Link>, '1', <PieChartOutlined />),
-    getItem('My files', '2', <FileOutlined />,[getItem('My Files', ''), getItem('My Folders', '8')]),
+    getItem(<span onClick={onmystoringclick}>Mystoring</span>,
+    '2',
+    <FileOutlined />,),
     getItem('test', 'sub1', <UserOutlined />),
     getItem('shared', 'sub2', <TeamOutlined />,),
-    getItem('Pinned', '9', <PushpinOutlined />),
+    getItem(
+      <span onClick={onPinnedClick}>Pinned</span>,
+      '9',
+      <PushpinOutlined />
+    ),
   ];
+ 
 
   return (
     <Sider
@@ -53,6 +77,7 @@ const Sidebar: React.FC = () => {
       collapsed={collapsed}
       onCollapse={(value) => setCollapsed(value)}
       style={{ background: 'white' }}
+
     >
       <div style={{ display: 'flex', marginTop: '15px', marginRight: '15px' }}>
         <img src="skystoring-high-resolution-logo-transparent-removebg-preview.png" style={{ height: '50px', width: '75px' }} alt="logo" />
@@ -67,6 +92,8 @@ const Sidebar: React.FC = () => {
             Skystoring
           </Typography.Title>
         )}
+      </div>
+      <div style={{ display: 'flex', marginTop: '15px', marginRight: '15px' }}>
       </div>
       <Menu style={{marginTop:"20px"}} theme="light" defaultSelectedKeys={['1']} mode="vertical" items={items} >
       </Menu>

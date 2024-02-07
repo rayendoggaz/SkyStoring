@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { PlusOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined, FolderOutlined,FolderOpenOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined, FolderOutlined,FolderOpenOutlined,FileOutlined, FileImageOutlined, FilePdfOutlined, FileTextOutlined } from '@ant-design/icons';
 import { Modal, Upload, message, Button, Spin, Menu, Dropdown } from 'antd';
 import type { UploadFile, UploadProps } from 'antd';
 import axios from 'axios';
+import { DragPreviewImage,DndProvider, useDrag,useDrop } from 'react-dnd';
 import { Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import PinToggleButton from './PinToggleButton';
+import { saveAs } from 'file-saver';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+
+import './FileList.css'; // Create a CSS file for styling
+
 
 
 export interface FileType extends UploadFile<any> {
@@ -24,20 +31,55 @@ interface FileListProps {
   onMoveToFolder?: (folderId: number, files: FileType[]) => void; 
   onMoveFilesToFolder?: (files: FileType[], folderId: number) => void; 
   onFileDrop: (result: DropResult) => void;
+
+
   folders: FolderType[];
 }
+const moveFileToFolder = async (fileId: string, targetFolderId: number) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const response = await axios.post(
+      `http://localhost:8000/api_folder/folders/${targetFolderId}/moveFile/`,
+      { fileId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, onMoveToFolder, folders: initialFolders }) => {
+    // Handle the response as needed
+    console.log(response.data);
+  } catch (error) {
+    console.error('Error moving file to folder:', error);
+    message.error('Failed to move file to folder.');
+  }
+};
+
+
+
+const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, onSelect, onMoveToFolder, folders: initialFolders }) => {
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [previewTitle, setPreviewTitle] = useState('');
   const [fileList, setFileList] = useState<FileType[]>([]);
+  
   const [loading, setLoading] = useState(false);
   const [folders, setFolders] = useState<FolderType[]>(initialFolders || []); // Initialize with initialFolders if available
   const [selectedFiles, setSelectedFiles] = useState<FileType[]>([]);
   const [moveToFolderVisible, setMoveToFolderVisible] = useState(false);
   const [selectedFolderForMove, setSelectedFolderForMove] = useState<number | null>(null);
+  const [previewContent, setPreviewContent] = useState<string>('');
+  
+  const [, drop] = useDrop({
+    accept: 'FILE',
+    drop: (item: any) => {
+      // Pass the drop result to the parent component
+      onFileDrop(item);
+    },
+  });
+
 
   const handleCancel = () => setPreviewOpen(false);
 
@@ -48,21 +90,42 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         : [...prevSelectedFiles, file]
     );
   };
-
+ 
   const handleLogout = () => {
     // Reset the fileList state to an empty array
     setFileList([]);
   };
+  
 
   const handlePreview = async (file: FileType) => {
-    if (!file.url && !file.preview) {
-      file.preview = await getBase64(file.originFileObj as File);
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:8000/api/files/${file.uid}/preview/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      // Assuming the response contains the Base64-encoded file content
+      const base64EncodedContent = response.data.file_content;
+  
+      // Decode the Base64-encoded content
+      const fileContent = atob(base64EncodedContent);
+  
+      // Set the decoded file content and open the modal
+      setPreviewContent(fileContent);
+      setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error('Error previewing file:', error);
+      message.error('Failed to preview file.');
+    } finally {
+      setLoading(false);
     }
-
-    setPreviewImage(file.url || (file.preview as string));
-    setPreviewOpen(true);
-    setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
   };
+  
+  
 
   const getFileNameFromUrl = (file: string) => {
     const parts = file.split('/');
@@ -154,28 +217,9 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
     }
   );
 
-  const handleOpen = async (file: FileType) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:8000/api/files/${file.uid}/open/` , {
-        headers: {
-          Authorization: `Bearer ${token}`, // Use Bearer for Authorization
-        },
-      },);
-      const fileContent = response.data;
-
-      alert(`File Content:\n\n${fileContent}`);
-    } catch (error) {
-      console.error('Error opening file:', error);
-      message.error('Failed to open file.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
-  const fetchFiles = async (retryAttempts = 0) => {
+   const fetchFiles = async (retryAttempts = 0) => {
     try {
       console.log('Fetching files...');
       const token = localStorage.getItem('accessToken');
@@ -186,6 +230,8 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         },
       });
 
+      console.log('API Response Data:', response.data); // Log the entire response data
+
       const filesWithNames = response.data?.map((file: FileType) => ({
         ...file,
         name: getFileNameFromUrl(file.file),
@@ -194,53 +240,50 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
       console.log('Files fetched successfully:', filesWithNames);
 
       setFileList(filesWithNames);
-      setFolders(response.data.folders); // Add this line to update folders
+
       console.log('Files:', filesWithNames);
     } catch (error: any) {
       console.error('Error fetching files:', error);
-      if (error.response && error.response.status === 401) {
-        if (retryAttempts < 3) {
-          try {
-            const refreshResponse = await axios.post('http://localhost:8000/auth/token/refresh/', {
-              refresh: localStorage.getItem('refreshToken'),
-            });
+      // ... (rest of the code remains the same)
+    }
+  };
 
-            const newAccessToken = refreshResponse.data.access;
-            if (newAccessToken) {
-              localStorage.setItem('accessToken', newAccessToken);
+  const fetchFolders = async () => {
+    try {
+      console.log('Fetching folders...');
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get('http://localhost:8000/api_folder/folders/', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-              console.log('Token Refresh Successful:', refreshResponse.data);
+      console.log('API Response Data (Folders):', response.data); // Log the entire response data for folders
 
-              // Retry the original request with the new access token
-              await fetchFiles(retryAttempts + 1);
-            } else {
-              console.error('New access token not received after refresh.');
-            }
-          } catch (refreshError) {
-            console.error('Token refresh failed:', refreshError);
-          }
-        } else {
-          console.error('Maximum retry attempts reached. Unable to fetch files.');
-        }
-      } else {
-        console.error('Error fetching files:', error);
-      }
+      // Update the state with the fetched folders
+      setFolders(response.data);
+    } catch (error) {
+      console.error('Error fetching folders:', error);
+      // ... (handle the error as needed)
     }
   };
 
   useEffect(() => {
     fetchFiles();
-  }, []); // Fetch files when the component mounts
+    fetchFolders();
+  }, []); // Fetch files and folders when the component mounts
 
 
-  const MoveToFileDropdown = ({ file, folders = [] }: { file: FileType; folders?: FolderType[] }) => {
-    const handleMenuClick = (selectedFolderId: number) => {
-      if (onMoveToFolder) {
-        onMoveToFolder(selectedFolderId, [file]);
+  const MoveToFileDropdown = ({ file, folders = [], onMoveFilesToFolder }: { file: FileType; folders?: FolderType[]; onMoveFilesToFolder?: (files: FileType[], folderId: number) => void }) => {
+    console.log(folders)
+    const handleMenuClick = async (selectedFolderId: number) => {
+      if (onMoveFilesToFolder) {
+        await onMoveFilesToFolder([file], selectedFolderId);
       }
+      await handleMoveToFolder(selectedFolderId)
+
     };
-
-
+  
     const fetchFolderContents = async (folderId: number) => {
       try {
         const token = localStorage.getItem('accessToken');
@@ -250,7 +293,6 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
           },
         });
         const folderContents: FileType[] = response.data;
-        
   
         setFileList(folderContents);
         message.success('File moved to folder successfully.');
@@ -260,56 +302,63 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
       }
     };
   
-
     const handleMoveToFolder = async (targetFolderId: number) => {
       try {
         const csrftoken = getCookie('csrftoken');
         const headers = {
           'X-CSRFToken': csrftoken,
         };
-
+  
         const formData = new FormData();
         formData.append('files[]', file.uid);
         const token = localStorage.getItem('accessToken');
-        await axios.post(`http://localhost:8000/api_folder/folders/${targetFolderId}/move/`, formData, { headers : {
-          Authorization: `Bearer ${token}`, // Use Bearer for Authorization
-        },});
-
-        
-        console.log(file.uid)
+        await axios.post(`http://localhost:8000/api_folder/folders/${targetFolderId}/move/`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Use Bearer for Authorization
+          },
+        });
+  
         // Fetch and display the contents of the target folder
         await fetchFolderContents(targetFolderId);
       } catch (error) {
         console.error('Error moving files to folder:', error);
         message.error('Failed to move files to folder.');
-        console.log(file)
       }
     };
+    
+  
+    const menu = (
+      <Menu>
+        {folders.map((folder) => (
+          <Menu.Item key={folder.id} onClick={() => handleMenuClick(folder.id)}>
+            {folder.name}
+          </Menu.Item>
+        ))}
+      </Menu>
+    );
+  
+    return (
+      <Dropdown overlay={menu} placement="bottomLeft">
+        <Button icon={<FolderOpenOutlined />}>Move to Folder</Button>
+      </Dropdown>
+    );
+  };
+  
+  const [, drag] = useDrag({
+    type: 'FILE', // Specify the type of draggable items
+      item: { type: 'FILE', file: File },
+   // Specify the data to be passed when the file is dragged
+  });
 
-   return (
-    <Dropdown
-      overlay={
-        <Menu onClick={(e) => handleMenuClick(parseInt(e.key, 10))}>
-          {Array.isArray(folders) &&
-            folders?.map((folder) => (
-              <Menu.Item key={folder.id}>{folder.name}</Menu.Item>
-            ))}
-        </Menu>
-      }
-    >
-      <Button icon={<FolderOpenOutlined />}>Move to Folder</Button>
-    </Dropdown>
-  );
-};;
- 
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
+      <>
       <Button
         icon={<UploadOutlined />}
         onClick={() => {
           const input = document.createElement('input');
           input.type = 'file';
-          input.accept = '*/*'; // Add your accepted file extensions here
+          input.accept = '*/*'; 
           input.onchange = (event) => {
             const target = event.target as HTMLInputElement;
             const selectedFile = target.files?.[0];
@@ -323,28 +372,44 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
       >
         Upload File
       </Button>
-      <Modal open={previewOpen} title={previewTitle} footer={null} onCancel={handleCancel}>
-        <img alt="example" style={{ width: '100%' }} src={previewImage} />
-      </Modal>
-      <div style={{ marginTop: '10px' }}>
-        {fileList?.map((file) => (
-          <div key={file.uid} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
-            <span>{file.name}</span>
-            <div>
-              <Button icon={<DownloadOutlined />} onClick={() => handleDownload(file)} loading={loading}>
-                Download
-              </Button>
-              <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(file)} loading={loading}>
-                Delete
-              </Button>
-              <MoveToFileDropdown file={file} folders={folders} />
-              <div key={file.uid} onClick={() => handleFileClick(file)}></div>
+        <div className="file-list-container" ref={drop}>
+            {fileList?.map((file) => (
+            <div key={file.uid} ref={drag} draggable={true} className="file-item" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+        
+              <div className="file-details">
+                {file.file.toLowerCase().endsWith('.png') || file.file.toLowerCase().endsWith('.jpg') ? (
+                  <FileImageOutlined style={{ marginRight: '5px' }} />
+                ) : file.file.toLowerCase().endsWith('.pdf') ? (
+                  <FilePdfOutlined style={{ marginRight: '5px' }} />
+                ) : file.file.toLowerCase().endsWith('.txt') ? (
+                  <FileTextOutlined style={{ marginRight: '5px' }} />
+                ) : (
+                  <FileOutlined style={{ marginRight: '5px' }} />
+                )}
+                <span onClick={() => handlePreview(file)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>{file.name}</span>
+              </div>
+              {/* Buttons for Download, Delete, and Move to Folder */}
+              <div className="file-actions">
+                <Button icon={<DownloadOutlined />} onClick={() => handleDownload(file)} loading={loading}>
+                  Download
+                </Button>
+                <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(file)} loading={loading}>
+                  Delete
+                </Button>
+                <MoveToFileDropdown file={file} folders={folders} />
+                <div className="file-selection" onClick={() => handleFileClick(file)}></div>
+                <PinToggleButton file={file} />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </>
+
+          ))}
+          
+        </div>
+
+      </>
+    </DndProvider>
   );
 };
+
 
 export default FileList;

@@ -10,7 +10,6 @@ class Folder(models.Model):
 
 class File(models.Model):
     uid = models.UUIDField(unique=True)
-    name = models.CharField(max_length=255)
     file = models.FileField(upload_to='files/')
     folder = models.ForeignKey(Folder, related_name='folder_files', on_delete=models.CASCADE, null=True, blank=True)
 
