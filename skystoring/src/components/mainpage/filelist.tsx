@@ -5,6 +5,8 @@ import type { UploadFile, UploadProps } from 'antd';
 import axios from 'axios';
 import { DragPreviewImage,DndProvider, useDrag,useDrop } from 'react-dnd';
 import { Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import PinToggleButton from './PinToggleButton';
+import { saveAs } from 'file-saver';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import './FileList.css'; // Create a CSS file for styling
@@ -68,6 +70,7 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
   const [selectedFiles, setSelectedFiles] = useState<FileType[]>([]);
   const [moveToFolderVisible, setMoveToFolderVisible] = useState(false);
   const [selectedFolderForMove, setSelectedFolderForMove] = useState<number | null>(null);
+  const [previewContent, setPreviewContent] = useState<string>('');
   
   const [, drop] = useDrop({
     accept: 'FILE',
@@ -95,14 +98,34 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
   
 
   const handlePreview = async (file: FileType) => {
-    if (!file.url && !file.preview) {
-      file.preview = await getBase64(file.originFileObj as File);
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:8000/api/files/${file.uid}/preview/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      // Assuming the response contains the Base64-encoded file content
+      const base64EncodedContent = response.data.file_content;
+  
+      // Decode the Base64-encoded content
+      const fileContent = atob(base64EncodedContent);
+  
+      // Set the decoded file content and open the modal
+      setPreviewContent(fileContent);
+      setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error('Error previewing file:', error);
+      message.error('Failed to preview file.');
+    } finally {
+      setLoading(false);
     }
-
-    setPreviewImage(file.url || (file.preview as string));
-    setPreviewOpen(true);
-    setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
   };
+  
+  
 
   const getFileNameFromUrl = (file: string) => {
     const parts = file.split('/');
@@ -194,25 +217,6 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
     }
   );
 
-  const handleOpen = async (file: FileType) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:8000/api/files/${file.uid}/open/` , {
-        headers: {
-          Authorization: `Bearer ${token}`, // Use Bearer for Authorization
-        },
-      },);
-      const fileContent = response.data;
-
-      alert(`File Content:\n\n${fileContent}`);
-    } catch (error) {
-      console.error('Error opening file:', error);
-      message.error('Failed to open file.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
    const fetchFiles = async (retryAttempts = 0) => {
@@ -321,6 +325,7 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
         message.error('Failed to move files to folder.');
       }
     };
+    
   
     const menu = (
       <Menu>
@@ -367,12 +372,10 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
       >
         Upload File
       </Button>
-      <Modal open={previewOpen} title={previewTitle} footer={null} onCancel={handleCancel}>
-          <img alt="example" style={{ width: '100%' }} src={previewImage} />
-        </Modal>
         <div className="file-list-container" ref={drop}>
-          {fileList?.map((file) => (
-            <div key={file.uid} ref={drag} draggable={true} className="file-item">
+            {fileList?.map((file) => (
+            <div key={file.uid} ref={drag} draggable={true} className="file-item" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+        
               <div className="file-details">
                 {file.file.toLowerCase().endsWith('.png') || file.file.toLowerCase().endsWith('.jpg') ? (
                   <FileImageOutlined style={{ marginRight: '5px' }} />
@@ -383,7 +386,7 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
                 ) : (
                   <FileOutlined style={{ marginRight: '5px' }} />
                 )}
-                <span>{file.name}</span>
+                <span onClick={() => handlePreview(file)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>{file.name}</span>
               </div>
               {/* Buttons for Download, Delete, and Move to Folder */}
               <div className="file-actions">
@@ -395,10 +398,14 @@ const FileList: React.FC<FileListProps> = ({ folderId,onFileDrop, searchQuery, o
                 </Button>
                 <MoveToFileDropdown file={file} folders={folders} />
                 <div className="file-selection" onClick={() => handleFileClick(file)}></div>
+                <PinToggleButton file={file} />
               </div>
             </div>
+
           ))}
+          
         </div>
+
       </>
     </DndProvider>
   );

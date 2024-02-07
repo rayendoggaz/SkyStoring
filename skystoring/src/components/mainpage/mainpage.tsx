@@ -9,6 +9,7 @@ import FileList, { FileType } from './filelist';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import axios from 'axios';
+import PinnedFilesPage from './PinnedFilesPage';
 import MyStoring from './MyStoring';
 
 const { Header, Content, Footer } = Layout;
@@ -23,6 +24,7 @@ const MainPage: React.FC = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [folders, setFolders] = useState<FolderType[]>([]);
+  const [showPinnedFiles, setShowPinnedFiles] = useState<boolean>(false);
   const [showMystoringFiles, setShowMystoringFiles] = useState<boolean>(false);
 
   const handleButtonClick = (content: string) => {
@@ -55,7 +57,7 @@ const MainPage: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sidebar onmystoringclick={handleMystoringClick} onSidebarItemClick={handleButtonClick} />
+      <Sidebar onmystoringclick={handleMystoringClick} onSidebarItemClick={handleButtonClick}  onPinnedClick={() => setShowPinnedFiles(true)}/>
       <Layout>
         <Header style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'white' }}>
           <Searchbar/>
@@ -84,7 +86,9 @@ const MainPage: React.FC = () => {
             </Flex>
             <Layout>
               <DndProvider backend={HTML5Backend}>
-                {showMystoringFiles ?(
+              {showPinnedFiles ? (
+                  <PinnedFilesPage />
+                ) :showMystoringFiles ?(
                   <MyStoring/>
                 ):
               selectedContent === 'folderlist' ? (

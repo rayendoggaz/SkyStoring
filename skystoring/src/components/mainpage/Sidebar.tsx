@@ -9,8 +9,10 @@ import {
   PushpinOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, theme, Typography } from 'antd';
+import { Layout, Menu, theme, Typography ,Button} from 'antd';
 import { Link } from 'react-router-dom';
+import PinnedFilesPage from './PinnedFilesPage';
+
 
 
 
@@ -43,9 +45,10 @@ function getItem(
   } as MenuItem;
 }
 
-const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (content: string) => void }> = ({
+const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (content: string) => void ;onPinnedClick: () => void}> = ({
   onmystoringclick,
   onSidebarItemClick,
+  onPinnedClick,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
@@ -60,7 +63,11 @@ const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (cont
     <FileOutlined />,),
     getItem('test', 'sub1', <UserOutlined />),
     getItem('shared', 'sub2', <TeamOutlined />,),
-    getItem('Pinned', '9', <PushpinOutlined />),
+    getItem(
+      <span onClick={onPinnedClick}>Pinned</span>,
+      '9',
+      <PushpinOutlined />
+    ),
   ];
  
 
