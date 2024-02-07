@@ -4,6 +4,9 @@ import { Modal, Upload, message, Button, Spin, Menu, Dropdown } from 'antd';
 import type { UploadFile, UploadProps } from 'antd';
 import axios from 'axios';
 import { Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import PinToggleButton from './PinToggleButton';
+import { saveAs } from 'file-saver';
+
 
 
 export interface FileType extends UploadFile<any> {
@@ -38,6 +41,7 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
   const [selectedFiles, setSelectedFiles] = useState<FileType[]>([]);
   const [moveToFolderVisible, setMoveToFolderVisible] = useState(false);
   const [selectedFolderForMove, setSelectedFolderForMove] = useState<number | null>(null);
+  const [previewContent, setPreviewContent] = useState<string>('');
 
   const handleCancel = () => setPreviewOpen(false);
 
@@ -55,14 +59,34 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
   };
 
   const handlePreview = async (file: FileType) => {
-    if (!file.url && !file.preview) {
-      file.preview = await getBase64(file.originFileObj as File);
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:8000/api/files/${file.uid}/preview/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      // Assuming the response contains the Base64-encoded file content
+      const base64EncodedContent = response.data.file_content;
+  
+      // Decode the Base64-encoded content
+      const fileContent = atob(base64EncodedContent);
+  
+      // Set the decoded file content and open the modal
+      setPreviewContent(fileContent);
+      setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error('Error previewing file:', error);
+      message.error('Failed to preview file.');
+    } finally {
+      setLoading(false);
     }
-
-    setPreviewImage(file.url || (file.preview as string));
-    setPreviewOpen(true);
-    setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
   };
+  
+  
 
   const getFileNameFromUrl = (file: string) => {
     const parts = file.split('/');
@@ -154,25 +178,6 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
     }
   );
 
-  const handleOpen = async (file: FileType) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:8000/api/files/${file.uid}/open/` , {
-        headers: {
-          Authorization: `Bearer ${token}`, // Use Bearer for Authorization
-        },
-      },);
-      const fileContent = response.data;
-
-      alert(`File Content:\n\n${fileContent}`);
-    } catch (error) {
-      console.error('Error opening file:', error);
-      message.error('Failed to open file.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
   const fetchFiles = async (retryAttempts = 0) => {
@@ -285,6 +290,7 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         console.log(file)
       }
     };
+    
 
    return (
     <Dropdown
@@ -324,12 +330,20 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
         Upload File
       </Button>
       <Modal open={previewOpen} title={previewTitle} footer={null} onCancel={handleCancel}>
-        <img alt="example" style={{ width: '100%' }} src={previewImage} />
-      </Modal>
+  <div>
+    {loading ? (
+      <Spin />
+    ) : (
+      <pre>{previewContent}</pre>
+    )}
+  </div>
+</Modal>
       <div style={{ marginTop: '10px' }}>
         {fileList?.map((file) => (
           <div key={file.uid} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
-            <span>{file.name}</span>
+             <span onClick={() => handlePreview(file)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>
+              {file.name}
+            </span>
             <div>
               <Button icon={<DownloadOutlined />} onClick={() => handleDownload(file)} loading={loading}>
                 Download
@@ -337,8 +351,10 @@ const FileList: React.FC<FileListProps> = ({ folderId, searchQuery, onSelect, on
               <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(file)} loading={loading}>
                 Delete
               </Button>
+              
               <MoveToFileDropdown file={file} folders={folders} />
               <div key={file.uid} onClick={() => handleFileClick(file)}></div>
+              <PinToggleButton file={file} />
             </div>
           </div>
         ))}

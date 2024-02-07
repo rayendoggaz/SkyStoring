@@ -9,6 +9,7 @@ import FileList, { FileType } from './filelist'; // Import FileType
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import axios from 'axios';
+import PinnedFilesPage from './PinnedFilesPage';
 
 const { Header, Content, Footer } = Layout;
 
@@ -22,6 +23,7 @@ const MainPage: React.FC = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [folders, setFolders] = useState<FolderType[]>([]);
+  const [showPinnedFiles, setShowPinnedFiles] = useState<boolean>(false);
 
   const handleButtonClick = (content: string) => {
     setSelectedContent(content);
@@ -48,7 +50,7 @@ const MainPage: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sidebar />
+      <Sidebar onPinnedClick={() => setShowPinnedFiles(true)} />
       <Layout>
         <Header style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'white' }}>
           <Searchbar/>
@@ -77,17 +79,19 @@ const MainPage: React.FC = () => {
             </Flex>
             <Layout>
               <DndProvider backend={HTML5Backend}>
-                {selectedContent === 'folderlist' ? (
+                {showPinnedFiles ? (
+                  <PinnedFilesPage />
+                ) : selectedContent === 'folderlist' ? (
                   <FolderList />
                 ) : (
                   <FileList
                     searchQuery={searchQuery}
                     onSelect={() => {}}
                     onFileDrop={() => {}}
-                    onMoveToFolder={(files,folderId) => {
+                    onMoveToFolder={(files, folderId) => {
                       // Implement your logic to move files to a folder
                       console.log(`Move files to folder ${folderId}`, files);
-                    }}  
+                    }}
                     folders={folders}
                   />
                 )}
