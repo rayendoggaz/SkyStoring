@@ -1,0 +1,27 @@
+/* FileList.css */
+
+.file-list-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .file-item {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+  }
+  
+  .file-details {
+    display: flex;
+    align-items: center;
+  }
+  
+  .file-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  

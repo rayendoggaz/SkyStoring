@@ -5,10 +5,11 @@ import { Routes, Route, Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Searchbar from './searchbar';
 import FolderList from './folderlist';
-import FileList, { FileType } from './filelist'; // Import FileType
+import FileList, { FileType } from './filelist'; 
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import axios from 'axios';
+import MyStoring from './MyStoring';
 
 const { Header, Content, Footer } = Layout;
 
@@ -22,9 +23,15 @@ const MainPage: React.FC = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [folders, setFolders] = useState<FolderType[]>([]);
+  const [showMystoringFiles, setShowMystoringFiles] = useState<boolean>(false);
 
   const handleButtonClick = (content: string) => {
     setSelectedContent(content);
+    setShowMystoringFiles(false);
+
+  };
+  const handleMystoringClick = () => {
+    setShowMystoringFiles(true);
   };
 
   const fetchFolders = async () => {
@@ -48,7 +55,7 @@ const MainPage: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sidebar />
+      <Sidebar onmystoringclick={handleMystoringClick} onSidebarItemClick={handleButtonClick} />
       <Layout>
         <Header style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'white' }}>
           <Searchbar/>
@@ -77,26 +84,31 @@ const MainPage: React.FC = () => {
             </Flex>
             <Layout>
               <DndProvider backend={HTML5Backend}>
-                {selectedContent === 'folderlist' ? (
-                  <FolderList />
-                ) : (
-                  <FileList
-                    searchQuery={searchQuery}
-                    onSelect={() => {}}
-                    onFileDrop={() => {}}
-                    onMoveToFolder={(files,folderId) => {
-                      // Implement your logic to move files to a folder
-                      console.log(`Move files to folder ${folderId}`, files);
-                    }}  
-                    folders={folders}
-                  />
-                )}
+                {showMystoringFiles ?(
+                  <MyStoring/>
+                ):
+              selectedContent === 'folderlist' ? (
+  <FolderList />
+) : selectedContent === 'mystoring' ? (
+  <MyStoring />
+) : selectedContent === 'filelist' ? (
+  <FileList
+    searchQuery={searchQuery}
+    onSelect={() => {}}
+    onFileDrop={() => {}}
+    onMoveToFolder={(files, folderId) => {
+      console.log(`Move files to folder ${folderId}`, files);
+    }}
+    folders={folders}
+  />
+) : null} 
+
               </DndProvider>
             </Layout>
           </div>
         </Content>
         <Footer style={{ textAlign: 'center', background: '#yourFooterColor' }}>
-          Ant Design ©{new Date().getFullYear()} Created by Ant UED
+          ©{new Date().getFullYear()} 
         </Footer>
       </Layout>
     </Layout>

@@ -1,7 +1,7 @@
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
+
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -42,25 +42,3 @@ class CustomFileDelete(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
-@csrf_exempt
-@require_POST
-def move_files_to_folder(request, target_folder_id):
-    try:
-        files_to_move_ids = request.data.get('files', [])
-        move_files_to_folder_method(files_to_move_ids, target_folder_id)
-        return JsonResponse({'message': 'Files moved to folder successfully.'})
-    except Exception as e:
-        return JsonResponse({'error': f'Error moving files to folder: {str(e)}'}, status=500)
-    
-
-def move_files_to_folder_method(files_to_move_ids, target_folder_id):
-    # Get the target folder
-    target_folder = get_object_or_404(Folder, id=target_folder_id)
-
-    # Get the files to move
-    files_to_move = File.objects.filter(uid__in=files_to_move_ids)
-
-    # Move each file to the target folder
-    for file_to_move in files_to_move:
-        file_to_move.folder = target_folder
-        file_to_move.save()
