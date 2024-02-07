@@ -7,6 +7,8 @@ import {
   TeamOutlined,
   UserOutlined,
   PushpinOutlined,
+  HomeOutlined,
+  FolderOpenOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, theme, Typography ,Button} from 'antd';
@@ -45,10 +47,11 @@ function getItem(
   } as MenuItem;
 }
 
-const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (content: string) => void ;onPinnedClick: () => void}> = ({
+const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (content: string) => void ;onPinnedClick: () => void ; onhomeclick: () => void}> = ({
   onmystoringclick,
   onSidebarItemClick,
   onPinnedClick,
+  onhomeclick,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
@@ -57,10 +60,13 @@ const Sidebar: React.FC<{onmystoringclick: () => void; onSidebarItemClick: (cont
 
     
   const items: MenuItem[] = [
-    getItem(<Link to={"/mainpage"}>Home</Link>, '1', <PieChartOutlined />),
+    getItem(<span onClick={onhomeclick}>Home</span>,
+    '1',
+    <HomeOutlined />,),
+    
     getItem(<span onClick={onmystoringclick}>Mystoring</span>,
     '2',
-    <FileOutlined />,),
+    <FolderOpenOutlined />,),
     getItem('test', 'sub1', <UserOutlined />),
     getItem('shared', 'sub2', <TeamOutlined />,),
     getItem(
