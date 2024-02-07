@@ -9,7 +9,10 @@ class File(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1, related_name='file_files')
     file = models.FileField(upload_to='uploads/')
     folder = models.ForeignKey(Folder, related_name='files', on_delete=models.CASCADE, null=True, blank=True)
-
+    pinned = models.BooleanField(default=False)
 
     def __str__(self):
         return f"File: {self.file.name} (UID: {self.uid})"
+    def toggle_pin(self):
+        self.pinned = not self.pinned
+        self.save()
