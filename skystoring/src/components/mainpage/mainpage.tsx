@@ -8,6 +8,7 @@ import FolderList from './folderlist';
 import FileList, { FileType } from './filelist'; // Import FileType
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import SearchResults from './SearchResults'; // Import SearchResults component
 import axios from 'axios';
 
 const { Header, Content, Footer } = Layout;
@@ -46,12 +47,18 @@ const MainPage: React.FC = () => {
     fetchFolders();
   }, []);
 
+  const navigateToSearchResults = (query: string) => {
+    console.log('Navigating to search results with query:', query);
+    setSearchQuery(query); // Set the search query state
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sidebar />
       <Layout>
         <Header style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'white' }}>
-          <Searchbar/>
+          {/* Pass navigateToSearchResults function as prop to Searchbar component */}
+          <Searchbar onSearchButtonClick={navigateToSearchResults} />
         </Header>
         <Content style={{ margin: '0 16px' }}>
           <p style={{ fontSize: '35px' }}>{selectedContent}</p>
@@ -77,19 +84,25 @@ const MainPage: React.FC = () => {
             </Flex>
             <Layout>
               <DndProvider backend={HTML5Backend}>
-                {selectedContent === 'folderlist' ? (
-                  <FolderList />
+                {/* Render search results if searchQuery is not empty */}
+                {searchQuery ? (
+                  <SearchResults query={searchQuery} />
                 ) : (
-                  <FileList
-                    searchQuery={searchQuery}
-                    onSelect={() => {}}
-                    onFileDrop={() => {}}
-                    onMoveToFolder={(files,folderId) => {
-                      // Implement your logic to move files to a folder
-                      console.log(`Move files to folder ${folderId}`, files);
-                    }}  
-                    folders={folders}
-                  />
+                  // Render FolderList or FileList based on selectedContent
+                  selectedContent === 'folderlist' ? (
+                    <FolderList />
+                  ) : (
+                    <FileList
+                      searchQuery={searchQuery}
+                      onSelect={() => {}}
+                      onFileDrop={() => {}}
+                      onMoveToFolder={(files,folderId) => {
+                        // Implement your logic to move files to a folder
+                        console.log(`Move files to folder ${folderId}`, files);
+                      }}  
+                      folders={folders}
+                    />
+                  )
                 )}
               </DndProvider>
             </Layout>

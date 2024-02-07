@@ -1,3 +1,5 @@
+/* Signup.css */
+
 .signup-container {
     background-color: whitesmoke;
     position: fixed;
@@ -9,40 +11,66 @@
     flex-direction: column;
     justify-content: flex-start;
   }
-
+  
   .signup-container2 {
-    background-color: #ffffff; /* White color */
-    border-radius: 10px; /* Rounded edges */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle box shadow */
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     width: 660px; /* Adjusted to max-width for responsiveness */
     height: 540px;
-    position: relative; 
+    position: relative;
     margin-top: 80px;
     margin-left: 60px;
   }
-
-body {
-    background-color: #E3EDF8; /* Cold Steel color */
+  
+  body {
+    background-color: #E3EDF8;
     margin: 0;
-}
-.input{
+  }
+  
+  .input {
     margin-left: 100px;
     width: 700px;
-}
-.input2{
+  }
+  
+  .input2 {
     margin-left: 65px;
     width: 700px;
-}
-.container2 {
-    background-color: #bcc4ca; 
+  }
+  
+  .container2 {
+    background-color: #bcc4ca;
     padding: 30px;
     width: 50%;
-    height: 100vh; /* Set the height to 100% of the viewport height */
+    height: 100vh;
     position: fixed;
-    left: 0; /* Align to the left side */
-    top: 0; /* Align to the top */
+    left: 0;
+    top: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Center content vertically */
-    align-items: center; /* Center content horizontally */
-}
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Responsive Adjustments */
+  @media screen and (max-width: 768px) {
+    .signup-container {
+      width: 100%; /* Make the container full width on smaller screens */
+    }
+  
+    .signup-container2 {
+      width: calc(100% - 40px); /* Adjusted to full width minus some padding */
+      margin: 20px; /* Add some margin for better spacing */
+      height: auto; /* Allow the container to expand based on content */
+    }
+  
+    .input,
+    .input2 {
+      margin-left: 20px; /* Reduce left margin for smaller screens */
+      width: calc(100% - 40px); /* Adjusted to full width minus some padding */
+    }
+  
+    .container2 {
+      width: 100%; /* Make the container full width on smaller screens */
+    }
+  }  

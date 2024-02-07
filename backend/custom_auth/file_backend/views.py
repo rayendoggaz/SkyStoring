@@ -64,3 +64,37 @@ def move_files_to_folder_method(files_to_move_ids, target_folder_id):
     for file_to_move in files_to_move:
         file_to_move.folder = target_folder
         file_to_move.save()
+
+from django.http import JsonResponse
+from django.db.models import Q
+from .models import File
+from .serializers import FileSerializer
+import logging
+from rest_framework.decorators import api_view
+
+logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
+def search_files(request):
+    try:
+        query = request.GET.get('query', '')
+        print('Received query:', query)
+
+        if not query:
+            return Response({'message': 'No query parameter provided'}, status=400)
+
+        # Get the authenticated user ID from the request
+        user_id = request.user.id
+
+        # Filter files based on the query and user
+        results = File.objects.filter(Q(file__icontains=query) & Q(user=user_id))
+
+        # Serialize the results and return them in the response
+        serializer = FileSerializer(results, many=True)
+        serialized_results = serializer.data
+
+        return Response(serialized_results)
+
+    except Exception as e:
+        logger.exception("Error in search_files view: %s", str(e))
+        return Response({'error': 'Internal Server Error'}, status=500)
