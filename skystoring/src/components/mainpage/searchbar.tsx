@@ -123,8 +123,7 @@ const Searchbar: React.FC<{ onSearchButtonClick: (query: string) => void }> = ({
   }, []);
 
   return (
-    <Space direction="vertical">
-      {/* User menu */}
+    <Space >
       <Popover
         content={<UserMenu username={username} onLogout={handleLogout} />}
         trigger="click"
@@ -139,14 +138,13 @@ const Searchbar: React.FC<{ onSearchButtonClick: (query: string) => void }> = ({
       
       {/* Search bar */}
       <AutoComplete
-        style={{ width: '700px', paddingRight: '10px', marginTop: '0px'}}
+        style={{ width: '400px', paddingRight: '10px'}}
         onSearch={onSearch}
       >
         <Search
           placeholder="Input search text"
           allowClear
           enterButton="Search"
-          size="large"
           onSearch={onSearchButtonClick}
         />
       </AutoComplete>
@@ -157,7 +155,7 @@ const Searchbar: React.FC<{ onSearchButtonClick: (query: string) => void }> = ({
           ref={dropdownRef}
           style={{ 
             position: 'absolute', 
-            width: '700px', 
+            width: '400px', 
             backgroundColor: 'white', 
             border: '1px solid #d9d9d9', 
             borderRadius: '4px', 

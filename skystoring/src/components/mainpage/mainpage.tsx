@@ -1,16 +1,17 @@
 // MainPage.tsx
 import React, { useState, useEffect } from "react";
-import { Layout, Button, Flex } from "antd";
+import { Layout, Button, Flex, Space, Typography } from "antd";
+import { Routes, Route, Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Searchbar from "./searchbar";
 import FolderList from "./folderlist";
 import FileList, { FileType } from "./filelist";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import SearchResults from "./SearchResults"; // Import SearchResults component
 import axios from "axios";
 import PinnedFilesPage from "./PinnedFilesPage";
 import MyStoring from "./MyStoring";
+import { FolderOutlined, FileOutlined } from "@ant-design/icons";
 
 const { Header, Content, Footer } = Layout;
 
@@ -24,24 +25,25 @@ const MainPage: React.FC = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [folders, setFolders] = useState<FolderType[]>([]);
-  const [showPinnedFiles, setShowPinnedFiles] = useState<boolean>(false);
-  const [showMystoringFiles, setShowMystoringFiles] = useState<boolean>(false);
-  const [showMyhome, setShowMyhome] = useState<boolean>(false);
   const [menu, setMenu] = useState<string>("home");
 
   const handleButtonClick = (content: string) => {
     setSelectedContent(content);
-    setShowMystoringFiles(false);
   };
+
   const handleMystoringClick = () => {
-    setShowMystoringFiles(true);
+    setMenu("mystoring");
   };
+
+  const navigateToSearchResults = (query: string) => {
+    setSearchQuery(query);
+  }
 
   const fetchFolders = async () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        "http://localhost:8000/api_folder/folders/",
+        "http://192.168.11.45:8000/api_folder/folders/",
         {
           headers: {
             Authorization: `Bearer ${token}`, // Use Bearer for Authorization
@@ -59,33 +61,38 @@ const MainPage: React.FC = () => {
     fetchFolders();
   }, []);
 
-  const navigateToSearchResults = (query: string) => {
-    console.log("Navigating to search results with query:", query);
-    setSearchQuery(query); // Set the search query state
-  };
-
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sidebar
+        onhomeclick={() => setMenu("home")}
         onmystoringclick={handleMystoringClick}
         onSidebarItemClick={handleButtonClick}
-        onPinnedClick={() => setShowPinnedFiles(true)}
-        onhomeclick={() => setShowMyhome(true)}
+        onPinnedClick={() => setMenu("pinned")}
       />
       <Layout>
         <Header
           style={{
             display: "flex",
             justifyContent: "center",
-            alignItems: "center",
             background: "white",
           }}
         >
-          {/* Pass navigateToSearchResults function as prop to Searchbar component */}
           <Searchbar onSearchButtonClick={navigateToSearchResults} />
         </Header>
         <Content style={{ margin: "0 16px" }}>
-          <p style={{ fontSize: "35px" }}>{selectedContent}</p>
+          {menu === "home" && (
+            <p style={{ fontSize: "35px" }}>
+              {selectedContent === "filelist" ? (
+                <>
+                  <FileOutlined style={{ color: "#1777FF" }} /> FilesList
+                </>
+              ) : (
+                <>
+                  <FolderOutlined style={{ color: "#1777FF" }} /> Folders List
+                </>
+              )}
+            </p>
+          )}
           <div
             style={{
               padding: 24,
@@ -94,57 +101,62 @@ const MainPage: React.FC = () => {
               background: "#yourContentBgColor",
             }}
           >
-            <Flex gap="small" wrap="wrap">
-              <p style={{ marginRight: "40px" }}>Suggestion</p>
-              <Button
-                style={{ width: "100px" }}
-                size="large"
-                type="primary"
-                onClick={() => handleButtonClick("filelist")}
-              >
-                Files
-              </Button>
-              <Button
-                style={{ width: "100px" }}
-                size="large"
-                type="primary"
-                onClick={() => handleButtonClick("folderlist")}
-              >
-                Folders
-              </Button>
-            </Flex>
+            {menu === "home" && (
+              <Space style={{ marginBottom: "12px" }}>
+                <Typography.Text>Suggestion</Typography.Text>
+                <Button
+                  size="large"
+                  type="primary"
+                  icon={<FileOutlined />}
+                  onClick={() => handleButtonClick("filelist")}
+                >
+                  Files
+                </Button>
+                <Button
+                  size="large"
+                  type="primary"
+                  icon={<FolderOutlined />}
+                  onClick={() => handleButtonClick("folderlist")}
+                >
+                  Folders
+                </Button>
+              </Space>
+            )}
             <Layout>
               <DndProvider backend={HTML5Backend}>
-                {searchQuery ? (
-                  <SearchResults query={searchQuery} />
-                ) : showMyhome ? (
-                  <FileList
-                    searchQuery={searchQuery}
-                    onSelect={() => {}}
-                    onFileDrop={() => {}}
-                    onMoveToFolder={(files, folderId) => {
-                      console.log(`Move files to folder ${folderId}`, files);
-                    }}
-                    folders={folders}
-                  />
-                ) : showPinnedFiles ? (
+                {menu === "home" ? (
+                  <>
+                    {selectedContent === "filelist" ? (
+                      <FileList
+                        searchQuery={searchQuery}
+                        onSelect={() => {}}
+                        onFileDrop={() => {}}
+                        onMoveToFolder={(files, folderId) => {
+                          console.log(
+                            `Move files to folder ${folderId}`,
+                            files
+                          );
+                        }}
+                        folders={folders}
+                      />
+                    ) : selectedContent === "folderlist" ? (
+                      <FolderList />
+                    ) : null}
+                  </>
+                ) : menu === "mystoring" ? (
+                  <MyStoring />
+                ) : (
+                  <PinnedFilesPage />
+                )}
+                {/* {showPinnedFiles ? (
                   <PinnedFilesPage />
                 ) : showMystoringFiles ? (
                   <MyStoring />
                 ) : selectedContent === "folderlist" ? (
-                  <FolderList />
-                ) : selectedContent === "filelist" ? (
-                  <FileList
-                    searchQuery={searchQuery}
-                    onSelect={() => {}}
-                    onFileDrop={() => {}}
-                    onMoveToFolder={(files, folderId) => {
-                      console.log(`Move files to folder ${folderId}`, files);
-                    }}
-                    folders={folders}
-                  />
-                ) : null}
-             
+                 
+                ) : selectedContent === "mystoring" ? (
+                  <MyStoring />
+                ) :  : null} */}
               </DndProvider>
             </Layout>
           </div>
