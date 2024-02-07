@@ -7,7 +7,8 @@ from rest_framework.response import Response
 
 from django.http import FileResponse, JsonResponse  
 from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_GET
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET,require_POST
 
 from .models import Folder
 
@@ -15,7 +16,27 @@ from .serializers import FolderSerializer,FileTypeSerializer
 
 from file_backend.models import File
 
+@csrf_exempt
+@require_POST
+def move_files_to_folder(request, target_folder_id):
+    try:
+        files_to_move_ids = request.POST.getlist('files[]', [])
+        move_files_to_folder_method(files_to_move_ids, target_folder_id)
+        return JsonResponse({'message': 'Files moved to folder successfully.'})
+    except Exception as e:
+        return JsonResponse({'error': f'Error moving files to folder: {str(e)}'}, status=500)
 
+def move_files_to_folder_method(files_to_move_ids, target_folder_id):
+    # Get the target folder
+    target_folder = get_object_or_404(Folder, id=target_folder_id)
+
+    # Get the files to move
+    files_to_move = File.objects.filter(uid__in=files_to_move_ids)
+
+    # Move each file to the target folder
+    for file_to_move in files_to_move:
+        file_to_move.folder = target_folder
+        file_to_move.save()
 
 class AddFileToFolderView(generics.UpdateAPIView):
     queryset = Folder.objects.all()
@@ -42,9 +63,6 @@ class AddFileToFolderView(generics.UpdateAPIView):
         except Exception as e:
             return Response({'detail': f'Error adding file to folder: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class FolderViewSet(viewsets.ModelViewSet):
-    queryset = Folder.objects.all()
-    serializer_class = FolderSerializer
 
 class FolderList(APIView):
     permission_classes = [IsAuthenticated]
@@ -57,18 +75,21 @@ class FolderList(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(user=self.request.user)  # Set the user when creating the folder
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def perform_create(self, serializer):
-        # Save the file and return the serialized data
-        serializer.save(user=self.request.user)
-        return Response(FolderSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get(self, request):
-        print("User:", request.user)  # Add this line for debugging
         folders = Folder.objects.filter(user=request.user)
+        print("User during folder retrieval:", request.user)
+        print("Folders retrieved:", folders) 
         if folders:
             data = self.serializer_class(folders, many=True).data
             return Response(data, 200)
@@ -78,37 +99,7 @@ class FolderList(APIView):
         
 
 
-class FolderDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Folder.objects.all()
-    serializer_class = FolderSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        folder = self.get_object()
-        folder.folder_files.all().delete()
-        return super().destroy(request, *args, **kwargs)
-
-    def list(self, request, *args, **kwargs):
-        folder = self.get_object()
-        serializer = self.get_serializer(folder)
-        return Response(serializer.data)
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        folder = self.get_object()
-        serializer = self.get_serializer(folder, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-def handle_file_upload(request):
-    folder_id = 6  # Replace with the actual folder ID
-
-    file_instance = File.objects.create(file=request.FILES['uploaded_file'])
-    folder = Folder.objects.get(id=folder_id)
-    file_instance.folder = folder
-    file_instance.save()
-
-    return Response({'detail': 'File uploaded and associated with the folder successfully'}, status=status.HTTP_201_CREATED)
 
 
 class FolderViewSet(viewsets.ModelViewSet):
@@ -124,5 +115,9 @@ def get_folder_contents(request, folder_id):
         return JsonResponse(serialized_contents, safe=False)
     except Exception as e:
         return JsonResponse({'error': f'Error fetching folder contents: {str(e)}'}, status=500)
+
+
     
+
+
 
