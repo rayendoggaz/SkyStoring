@@ -1,16 +1,17 @@
 // MainPage.tsx
-import React, { useState, useEffect } from 'react';
-import { Layout, Button, Flex } from 'antd';
-import { Routes, Route, Link } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Searchbar from './searchbar';
-import FolderList from './folderlist';
-import FileList, { FileType } from './filelist'; 
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import axios from 'axios';
-import PinnedFilesPage from './PinnedFilesPage';
-import MyStoring from './MyStoring';
+import React, { useState, useEffect } from "react";
+import { Layout, Button, Flex, Space, Typography } from "antd";
+import { Routes, Route, Link } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Searchbar from "./searchbar";
+import FolderList from "./folderlist";
+import FileList, { FileType } from "./filelist";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import axios from "axios";
+import PinnedFilesPage from "./PinnedFilesPage";
+import MyStoring from "./MyStoring";
+import { FolderOutlined, FileOutlined } from "@ant-design/icons";
 
 const { Header, Content, Footer } = Layout;
 
@@ -20,34 +21,39 @@ export interface FolderType {
 }
 
 const MainPage: React.FC = () => {
-  const [selectedContent, setSelectedContent] = useState<string>('filelist');
+  const [selectedContent, setSelectedContent] = useState<string>("filelist");
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [folders, setFolders] = useState<FolderType[]>([]);
-  const [showPinnedFiles, setShowPinnedFiles] = useState<boolean>(false);
-  const [showMystoringFiles, setShowMystoringFiles] = useState<boolean>(false);
+  const [menu, setMenu] = useState<string>("home");
 
   const handleButtonClick = (content: string) => {
     setSelectedContent(content);
-    setShowMystoringFiles(false);
+  };
 
-  };
   const handleMystoringClick = () => {
-    setShowMystoringFiles(true);
+    setMenu("mystoring");
   };
+
+  const navigateToSearchResults = (query: string) => {
+    setSearchQuery(query);
+  }
 
   const fetchFolders = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get('http://localhost:8000/api_folder/folders/', {
-        headers: {
-          Authorization: `Bearer ${token}`, // Use Bearer for Authorization
-        },
-      });
-      
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(
+        "http://192.168.11.45:8000/api_folder/folders/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Use Bearer for Authorization
+          },
+        }
+      );
+
       setFolders(response.data);
     } catch (error) {
-      console.error('Error fetching folders:', error);
+      console.error("Error fetching folders:", error);
     }
   };
 
@@ -56,63 +62,107 @@ const MainPage: React.FC = () => {
   }, []);
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sidebar onmystoringclick={handleMystoringClick} onSidebarItemClick={handleButtonClick}  onPinnedClick={() => setShowPinnedFiles(true)}/>
+    <Layout style={{ minHeight: "100vh" }}>
+      <Sidebar
+        onhomeclick={() => setMenu("home")}
+        onmystoringclick={handleMystoringClick}
+        onSidebarItemClick={handleButtonClick}
+        onPinnedClick={() => setMenu("pinned")}
+      />
       <Layout>
-        <Header style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'white' }}>
-          <Searchbar/>
+        <Header
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            background: "white",
+          }}
+        >
+          <Searchbar onSearchButtonClick={navigateToSearchResults} />
         </Header>
-        <Content style={{ margin: '0 16px' }}>
-          <p style={{ fontSize: '35px' }}>{selectedContent}</p>
-          <div style={{ padding: 24, minHeight: 360, borderRadius: 'yourRadius', background: '#yourContentBgColor' }}>
-            <Flex gap="small" wrap="wrap">
-              <p style={{ marginRight: '40px' }}>Suggestion</p>
-              <Button
-                style={{ width: '100px' }}
-                size="large"
-                type="primary"
-                onClick={() => handleButtonClick('filelist')}
-              >
-                Files
-              </Button>
-              <Button
-                style={{ width: '100px' }}
-                size="large"
-                type="primary"
-                onClick={() => handleButtonClick('folderlist')}
-              >
-                Folders
-              </Button>
-            </Flex>
+        <Content style={{ margin: "0 16px" }}>
+          {menu === "home" && (
+            <p style={{ fontSize: "35px" }}>
+              {selectedContent === "filelist" ? (
+                <>
+                  <FileOutlined style={{ color: "#1777FF" }} /> FilesList
+                </>
+              ) : (
+                <>
+                  <FolderOutlined style={{ color: "#1777FF" }} /> Folders List
+                </>
+              )}
+            </p>
+          )}
+          <div
+            style={{
+              padding: 24,
+              minHeight: 360,
+              borderRadius: "yourRadius",
+              background: "#yourContentBgColor",
+            }}
+          >
+            {menu === "home" && (
+              <Space style={{ marginBottom: "12px" }}>
+                <Typography.Text>Suggestion</Typography.Text>
+                <Button
+                  size="large"
+                  type="primary"
+                  icon={<FileOutlined />}
+                  onClick={() => handleButtonClick("filelist")}
+                >
+                  Files
+                </Button>
+                <Button
+                  size="large"
+                  type="primary"
+                  icon={<FolderOutlined />}
+                  onClick={() => handleButtonClick("folderlist")}
+                >
+                  Folders
+                </Button>
+              </Space>
+            )}
             <Layout>
               <DndProvider backend={HTML5Backend}>
-              {showPinnedFiles ? (
+                {menu === "home" ? (
+                  <>
+                    {selectedContent === "filelist" ? (
+                      <FileList
+                        searchQuery={searchQuery}
+                        onSelect={() => {}}
+                        onFileDrop={() => {}}
+                        onMoveToFolder={(files, folderId) => {
+                          console.log(
+                            `Move files to folder ${folderId}`,
+                            files
+                          );
+                        }}
+                        folders={folders}
+                      />
+                    ) : selectedContent === "folderlist" ? (
+                      <FolderList />
+                    ) : null}
+                  </>
+                ) : menu === "mystoring" ? (
+                  <MyStoring />
+                ) : (
                   <PinnedFilesPage />
-                ) :showMystoringFiles ?(
-                  <MyStoring/>
-                ):
-              selectedContent === 'folderlist' ? (
-  <FolderList />
-) : selectedContent === 'mystoring' ? (
-  <MyStoring />
-) : selectedContent === 'filelist' ? (
-  <FileList
-    searchQuery={searchQuery}
-    onSelect={() => {}}
-    onFileDrop={() => {}}
-    onMoveToFolder={(files, folderId) => {
-      console.log(`Move files to folder ${folderId}`, files);
-    }}
-    folders={folders}
-  />
-) : null} 
-
+                )}
+                {/* {showPinnedFiles ? (
+                  <PinnedFilesPage />
+                ) : showMystoringFiles ? (
+                  <MyStoring />
+                ) : selectedContent === "folderlist" ? (
+                 
+                ) : selectedContent === "mystoring" ? (
+                  <MyStoring />
+                ) :  : null} */}
               </DndProvider>
             </Layout>
           </div>
         </Content>
-        <Footer style={{ textAlign: 'center', background: '#yourFooterColor' }}>
-          ©{new Date().getFullYear()} 
+        <Footer style={{ textAlign: "center", background: "#yourFooterColor" }}>
+          ©{new Date().getFullYear()}
         </Footer>
       </Layout>
     </Layout>

@@ -96,9 +96,9 @@ WSGI_APPLICATION = 'custom_auth.wsgi.application'
 DATABASES = {
     'default': {
          'ENGINE': 'django.db.backends.postgresql',
-         'NAME': 'skystoring_vrai',
+         'NAME': 'skystoring',
          'USER': 'postgres',
-         'PASSWORD': '1234',
+         'PASSWORD': 'rayen',
          'HOST': 'localhost',
          'PORT': '5432',
    }

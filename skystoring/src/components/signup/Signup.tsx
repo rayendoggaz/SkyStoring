@@ -94,7 +94,7 @@ const Signup: React.FC = () => {
       console.log('Response from server:', response.data);
   
       // Redirect to another page after successful signup
-      navigate('/mainpage');  // Update the URL as needed
+      navigate('/signin');  // Update the URL as needed
   
       console.log('Redirected to /signin');
     } catch (error) {

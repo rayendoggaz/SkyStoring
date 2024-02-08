@@ -1,7 +1,5 @@
 /* signin.css */
 
-/* signin.css */
-
 .signin-container {
   background-color: #E3EDF8;
   display: flex;
@@ -11,63 +9,82 @@
   margin: 0;
 }
 
-  
+.container {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 800px;
+  max-width: 100%; /* Ensure container doesn't exceed viewport width */
+  height: 500px;
+  position: relative;
+}
+
+.top-left-image {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.top-left-image img {
+  margin-right: 10px;
+}
+
+.logo-text {
+  font-weight: bold;
+  font-size: 30px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.welcome-message {
+  padding-left: 116px;
+  margin-bottom: 60px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.welcome-message p {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 100px;
+}
+
+.ant-input {
+  height: 40px;
+}
+
+.ant-btn {
+
+  height: 40px;
+  font-size: 16px;
+}
+
+.form-signin {
+  margin-left: 100px;
+}
+
+@media screen and (max-width: 768px) {
+  /* Adjust layout for smaller screens */
   .container {
-    background-color: #ffffff; /* White color */
-    border-radius: 10px; /* Rounded edges */
-    padding: 30px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle box shadow */
-    width: 800px; /* Adjusted to max-width for responsiveness */
-    height: 500px;
-    position: relative; /* Relative positioning for child absolute positioning */
+    width: 100%;
+    height: auto;
+    padding: 20px;
   }
-  
-  .top-left-image {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .top-left-image img {
-    margin-right: 10px;
-  }
-  
-  .logo-text {
-    font-weight: bold;
-    font-size: 30px;
-    font-family: Arial, Helvetica, sans-serif;
-  }
-  
+
   .welcome-message {
-    padding-left: 116px;
-    margin-bottom: 60px;
-    font-family: Arial, Helvetica, sans-serif;
+    padding-left: 0;
+    text-align: center;
   }
-  
-  .welcome-message p {
-    font-size: 20px;
-    font-weight: bold;
-  }
-  
-  .input {
-    display: flex;
-    flex-direction: column;
-    justify-content:center ;
-    margin-left: 100px;
-  }
-  
-  .ant-input {
-    height: 40px;
-  }
-  
+
+  .input,
   .ant-btn {
-    margin-left: 70px;
-    height: 40px;
-    font-size: 16px;
+    margin-left: 0;
   }
-  
-  .form-signin{
-    margin-left: 100px;
-  }
+}
